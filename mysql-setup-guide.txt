@@ -1,0 +1,42 @@
+# Hospital Management System - Team MySQL Setup
+
+Follow these steps so every teammate can clone the project, configure MySQL, and run the app locally.
+
+1. **Share the source code**
+   - Create a Git repository (GitHub, GitLab, Bitbucket, etc.) and push the entire project except local-only files.
+   - Make sure `.gitignore` contains `db.properties`, IDE folders (/.idea, /.vscode), and build outputs (`/out`).
+   - Each teammate clones the repository to their machine.
+
+2. **Install dependencies locally**
+   - Install Java 8+ (all source files compile with `javac`).
+   - Install MySQL Server (8.x recommended) and ensure the MySQL service is running.
+   - Download the MySQL Connector/J JAR and add it to your classpath when running the application. If you package the app with an IDE, add the driver to the project library list.
+
+3. **Provision the database**
+   - From the project root, run the schema and seed scripts to create tables and populate starter data:
+     ```
+     mysql -u <mysql_user> -p < sql/schema.sql
+     mysql -u <mysql_user> -p < sql/seed-data.sql
+     ```
+   - Replace `<mysql_user>` with your local MySQL username (default is usually `root`). Enter the password when prompted.
+
+4. **Configure credentials per machine**
+   - Copy `db-template.properties` to `db.properties` (the latter is ignored by Git).
+   - Edit `db.properties` to match your local settings:
+     ```
+     db.url=jdbc:mysql://localhost:3306/hospital_management_system
+     db.user=your_mysql_user
+     db.password=your_mysql_password
+     ```
+   - The application reads this file at startup. Omit any key to fall back to the default defined in `conn.java`.
+
+5. **Run and verify**
+   - Compile the project: `javac -d out src/hospital/management/system/*.java`
+   - Launch (example): `java -cp out;path\to\mysql-connector-j.jar hospital.management.system.Login`
+   - Log in with credentials from `sql/seed-data.sql` (default admin/admin123) and navigate through the UI to confirm the data loads correctly.
+
+6. **Ongoing collaboration**
+   - When schema changes are required, update both `sql/schema.sql` and `sql/seed-data.sql`, commit the changes, and notify the team to re-run the scripts.
+   - Never commit `db.properties` or any files containing real credentials.
+
+Following these steps keeps everyone’s environment consistent while allowing local flexibility for MySQL credentials.
