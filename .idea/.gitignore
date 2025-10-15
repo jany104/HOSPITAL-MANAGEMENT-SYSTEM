@@ -1,0 +1,45 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Java build outputs
+/out/
+/bin/
+/*.class
+
+# IntelliJ IDEA
+.idea/
+*.iml
+# (Optionally allow .idea/libraries/ if you want to share library configs)
+!.idea/libraries/
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/
+/nbbuild/
+/dist/
+/nbdist/
+/nbproject/private/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Local database credentials
+db.properties
+
+# Other
+hospital-management-system.log
