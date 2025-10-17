@@ -14,6 +14,7 @@ focus      keep operators fast, keep configuration local
 `data`         sql/schema.sql · sql/seed-data.sql  
 `config`       copy db-template.properties → db.properties (personal credentials)  
 `privacy`      db.properties is gitignored by design
+`bootstrap`    scripts/bootstrap-db.ps1 (one-shot schema + seed)
 
 ### launch script
 ```
@@ -28,6 +29,12 @@ SOURCE sql/seed-data.sql;
 copy db-template.properties db.properties
 
 powershell -ExecutionPolicy Bypass -File scripts/build-and-run.ps1
+```
+
+### database bootstrap helper
+```
+# run once to create schema + seed data (prompts for password if omitted)
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap-db.ps1 -User root
 ```
 
 ### collaboration cues

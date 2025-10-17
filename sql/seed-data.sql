@@ -1,3 +1,5 @@
+USE hospital_management_system;
+
 INSERT INTO login (ID, PW) VALUES
     ('admin', 'admin123'),
     ('team_member', 'strongpass123')
