@@ -320,19 +320,7 @@ public class NEW_PATIENT extends JFrame {
         try (conn c = new conn()) {
             c.connection.setAutoCommit(false);
 
-            try (PreparedStatement insert = c.connection.prepareStatement(
-                    "insert into Patient_Info (ID, number, Name, Gender, Disease, Room_Number, Time, Deposite, Admission_Reason) values (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-                insert.setString(1, form.idType());
-                insert.setString(2, form.idNumber());
-                insert.setString(3, form.name());
-                insert.setString(4, form.gender());
-                insert.setString(5, form.department());
-                insert.setString(6, form.room());
-                insert.setString(7, form.admissionTime());
-                insert.setString(8, form.deposit());
-                insert.setString(9, form.reason());
-                insert.executeUpdate();
-            }
+            insertPatient(c, form);
 
             try (PreparedStatement updateRoom = c.connection.prepareStatement("update room set Availability = 'Occupied' where room_no = ?")) {
                 updateRoom.setString(1, form.room());
@@ -344,6 +332,91 @@ public class NEW_PATIENT extends JFrame {
             dispose();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Unable to save admission: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void insertPatient(conn connection, AdmissionForm form) throws SQLException {
+        try {
+            attemptInsertWithReason(connection, form);
+        } catch (SQLException ex) {
+            if (!isMissingAdmissionReasonColumn(ex)) {
+                throw ex;
+            }
+
+            boolean upgraded = ensureAdmissionReasonColumn(connection);
+            if (upgraded) {
+                attemptInsertWithReason(connection, form);
+                return;
+            }
+
+            attemptLegacyInsert(connection, form);
+        }
+    }
+
+    private boolean isMissingAdmissionReasonColumn(SQLException ex) {
+        for (SQLException current = ex; current != null; current = current.getNextException()) {
+            String state = current.getSQLState();
+            int code = current.getErrorCode();
+            if ("42S22".equals(state) || code == 1054) {
+                return true;
+            }
+            String message = Objects.toString(current.getMessage(), "").toLowerCase(Locale.ENGLISH);
+            if (message.contains("unknown column") && message.contains("admission_reason")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void attemptInsertWithReason(conn connection, AdmissionForm form) throws SQLException {
+        try (PreparedStatement insert = connection.connection.prepareStatement(
+                "insert into Patient_Info (ID, number, Name, Gender, Disease, Room_Number, Time, Deposite, Admission_Reason) values (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            insert.setString(1, form.idType());
+            insert.setString(2, form.idNumber());
+            insert.setString(3, form.name());
+            insert.setString(4, form.gender());
+            insert.setString(5, form.department());
+            insert.setString(6, form.room());
+            insert.setString(7, form.admissionTime());
+            insert.setString(8, form.deposit());
+            insert.setString(9, form.reason());
+            insert.executeUpdate();
+        }
+    }
+
+    private void attemptLegacyInsert(conn connection, AdmissionForm form) throws SQLException {
+        try (PreparedStatement insertLegacy = connection.connection.prepareStatement(
+                "insert into Patient_Info (ID, number, Name, Gender, Disease, Room_Number, Time, Deposite) values (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            insertLegacy.setString(1, form.idType());
+            insertLegacy.setString(2, form.idNumber());
+            insertLegacy.setString(3, form.name());
+            insertLegacy.setString(4, form.gender());
+            insertLegacy.setString(5, form.department());
+            insertLegacy.setString(6, form.room());
+            insertLegacy.setString(7, form.admissionTime());
+            insertLegacy.setString(8, form.deposit());
+            insertLegacy.executeUpdate();
+        }
+    }
+
+    private boolean ensureAdmissionReasonColumn(conn connection) {
+        try (PreparedStatement check = connection.connection.prepareStatement(
+                "select 1 from information_schema.columns where table_schema = database() and table_name = 'Patient_Info' and column_name = 'Admission_Reason'")) {
+            try (ResultSet rs = check.executeQuery()) {
+                if (rs.next()) {
+                    return true;
+                }
+            }
+        } catch (SQLException ignored) {
+            return false;
+        }
+
+        try (PreparedStatement alter = connection.connection.prepareStatement(
+                "alter table Patient_Info add column Admission_Reason text null after Deposite")) {
+            alter.executeUpdate();
+            return true;
+        } catch (SQLException ignored) {
+            return false;
         }
     }
 
